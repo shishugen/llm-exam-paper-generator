@@ -35,6 +35,7 @@ public class PaperComposeUtil
         List<ExamQuestion> picked = new ArrayList<>();
         List<String> difficulties = expand(diffRatio);
         List<Long> used = new ArrayList<>();
+        List<Long> usedKnowledge = new ArrayList<>();
         int totalCount = 0;
         for (int n : typeRatio.values())
         {
@@ -51,7 +52,13 @@ public class PaperComposeUtil
                         : difficulties.get((sortNo - 1) % difficulties.size());
                 sortNo++;
                 List<ExamQuestion> questions = questionMapper.selectRandomQuestions(
-                        paper.getCourseId(), entry.getKey(), diff, chapterIds, used, 1);
+                        paper.getCourseId(), entry.getKey(), diff, chapterIds, used, usedKnowledge, 1);
+                if (questions.isEmpty())
+                {
+                    // 没覆盖过的知识点里没题了，放开条件再抽一次
+                    questions = questionMapper.selectRandomQuestions(
+                            paper.getCourseId(), entry.getKey(), diff, chapterIds, used, null, 1);
+                }
                 if (questions.isEmpty())
                 {
                     warning = "题型 " + entry.getKey() + " 在难度 " + diff + " 下题量不足，请先补题";
@@ -59,6 +66,10 @@ public class PaperComposeUtil
                 }
                 ExamQuestion q = questions.get(0);
                 used.add(q.getId());
+                if (q.getKnowledgeId() != null)
+                {
+                    usedKnowledge.add(q.getKnowledgeId());
+                }
                 picked.add(q);
             }
         }
@@ -147,7 +158,7 @@ public class PaperComposeUtil
             used.add(x.getQuestionId());
         }
         List<ExamQuestion> questions = questionMapper.selectRandomQuestions(
-                old.getCourseId(), old.getType(), old.getDifficulty(), null, used, 1);
+                old.getCourseId(), old.getType(), old.getDifficulty(), null, used, null, 1);
         if (questions.isEmpty())
         {
             return false;

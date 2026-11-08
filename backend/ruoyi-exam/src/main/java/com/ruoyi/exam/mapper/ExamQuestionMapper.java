@@ -63,19 +63,21 @@ public interface ExamQuestionMapper
 
     /**
      * 按题型/难度随机抽已通过审核的题
-     * chapterIds 不为空时只在这些章节里抽，excludeIds 防止同一题重复进卷
+     * chapterIds 不为空时只在这些章节里抽，excludeIds 防止同一题重复进卷，
+     * excludeKnowledgeIds 让抽题优先选还没覆盖过的知识点
      */
     public List<ExamQuestion> selectRandomQuestions(@Param("courseId") Long courseId,
                                                     @Param("type") String type,
                                                     @Param("difficulty") String difficulty,
                                                     @Param("chapterIds") List<Long> chapterIds,
                                                     @Param("excludeIds") List<Long> excludeIds,
+                                                    @Param("excludeKnowledgeIds") List<Long> excludeKnowledgeIds,
                                                     @Param("limit") int limit);
 
     /**
-     * 题干精确比对去重
+     * 查已有的题干，出题时用来比对新题是不是重复
      */
-    public int countByStem(@Param("stem") String stem);
+    public List<String> selectAllStems();
 
     /**
      * 该知识点上次被驳回的原因，拼进下一次 Prompt

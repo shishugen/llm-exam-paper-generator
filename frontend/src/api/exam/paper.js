@@ -79,9 +79,9 @@ export function getPaperDetail(paperId) {
   })
 }
 
-// 导出 Word：试题卷与答案卷分离
-export function exportPaper(paperId, filename) {
-  return download('/exam/paper/exportWord', { paperId }, filename)
+// 导出 Word：type = paper 试题卷 / answer 答案卷 / all 两份合在一起
+export function exportPaper(paperId, type, filename) {
+  return download('/exam/paper/exportWord', { paperId, type }, filename)
 }
 
 // 组卷弹窗用：当前课程/章节下能抽多少题（只算已通过审核的）

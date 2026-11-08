@@ -183,17 +183,21 @@ public class ExamPaperController extends BaseController
         return success(data);
     }
 
-    // 导出 Word：试题卷 + 分页符 + 答案卷
+    // 导出 Word：type = paper 试题卷 / answer 答案卷 / all 两份合在一起
     @PostMapping("/exportWord")
-    public void exportWord(@RequestParam("paperId") Long paperId, HttpServletResponse response) throws IOException
+    public void exportWord(@RequestParam("paperId") Long paperId,
+                           @RequestParam(value = "type", defaultValue = "all") String type,
+                           HttpServletResponse response) throws IOException
     {
         ExamPaper paper = examPaperService.selectExamPaperById(paperId);
         String title = paper == null ? "试卷" : paper.getTitle();
         List<Map<String, Object>> rows = paperMapper.selectPaperDetail(paperId);
-        String name = URLEncoder.encode(title + ".docx", "UTF-8").replace("+", "%20");
+        String suffix = "paper".equals(type) ? "_试题卷"
+                : ("answer".equals(type) ? "_答案卷" : "_试题卷及答案卷");
+        String name = URLEncoder.encode(title + suffix + ".docx", "UTF-8").replace("+", "%20");
         response.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
         response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + name);
-        paperExportUtil.export(title, rows, response.getOutputStream());
+        paperExportUtil.export(title, rows, type, response.getOutputStream());
     }
 
     // 从组卷参数里取出试卷对象

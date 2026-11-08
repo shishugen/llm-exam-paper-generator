@@ -14,40 +14,53 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 
-// 导出 Word：前面是试题卷，分页后是答案卷
+// 导出 Word：按需要输出试题卷、答案卷，或两份合在一起
 @Component
 public class PaperExportUtil
 {
-    public static void export(String title, List<Map<String, Object>> rows, OutputStream out) throws IOException
+    public static void export(String title, List<Map<String, Object>> rows, String type, OutputStream out) throws IOException
     {
+        String t = (type == null || type.isEmpty()) ? "all" : type;
         try (XWPFDocument doc = new XWPFDocument())
         {
-            paragraph(doc, title, true, 16);
-            paragraph(doc, "姓名：____________    学号：____________    得分：__________", false, 11);
-            paragraph(doc, "", false, 11);
-
-            int no = 1;
-            for (Map<String, Object> r : rows)
+            // 试题卷
+            if (!"answer".equals(t))
             {
-                paragraph(doc, no + ". " + str(r.get("stem")) + "（" + str(r.get("score")) + " 分）", false, 11);
-                String options = formatOptions(r.get("options"));
-                if (!options.isEmpty())
+                paragraph(doc, title, true, 16);
+                paragraph(doc, "姓名：____________    学号：____________    得分：__________", false, 11);
+                paragraph(doc, "", false, 11);
+
+                int no = 1;
+                for (Map<String, Object> r : rows)
                 {
-                    paragraph(doc, "    " + options, false, 10);
+                    paragraph(doc, no + ". " + str(r.get("stem")) + "（" + str(r.get("score")) + " 分）", false, 11);
+                    String options = formatOptions(r.get("options"));
+                    if (!options.isEmpty())
+                    {
+                        paragraph(doc, "    " + options, false, 10);
+                    }
+                    paragraph(doc, "", false, 10);
+                    no++;
                 }
-                paragraph(doc, "", false, 10);
-                no++;
             }
 
-            // 分页符：试题卷与答案卷分开
-            doc.createParagraph().createRun().addBreak(BreakType.PAGE);
-            paragraph(doc, "参考答案与解析", true, 16);
-            int i = 1;
-            for (Map<String, Object> r : rows)
+            // 答案卷
+            if (!"paper".equals(t))
             {
-                paragraph(doc, i + ". 答案：" + str(r.get("answer")), false, 11);
-                paragraph(doc, "   解析：" + str(r.get("analysis")), false, 10);
-                i++;
+                if ("all".equals(t))
+                {
+                    // 两份合在一起时用分页符分开
+                    doc.createParagraph().createRun().addBreak(BreakType.PAGE);
+                }
+                paragraph(doc, title + "（参考答案与解析）", true, 16);
+                paragraph(doc, "", false, 11);
+                int i = 1;
+                for (Map<String, Object> r : rows)
+                {
+                    paragraph(doc, i + ". 答案：" + str(r.get("answer")), false, 11);
+                    paragraph(doc, "   解析：" + str(r.get("analysis")), false, 10);
+                    i++;
+                }
             }
             doc.write(out);
         }

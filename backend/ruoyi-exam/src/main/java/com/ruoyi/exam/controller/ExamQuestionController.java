@@ -46,6 +46,8 @@ public class ExamQuestionController extends BaseController
     @Autowired private ExamReviewLogMapper reviewLogMapper;
     @Autowired private AiUtil aiUtil;
 
+    private static final double SIMILAR_LIMIT = 0.9;
+
     /**
      * 查询题库列表
      */
@@ -119,13 +121,14 @@ public class ExamQuestionController extends BaseController
         List<ExamQuestion> list = aiUtil.generate(knowledgeName, type, difficulty, count, rejectReason);
 
         int saved = 0, duplicated = 0;
+        List<String> oldStems = questionMapper.selectAllStems();
         for (ExamQuestion q : list)
         {
             if (q.getStem() == null || q.getStem().isEmpty() || q.getAnswer() == null)
             {
                 continue;
             }
-            if (questionMapper.countByStem(q.getStem()) > 0)
+            if (isDuplicate(q.getStem(), oldStems))
             {
                 duplicated++;
                 continue;
@@ -138,6 +141,7 @@ public class ExamQuestionController extends BaseController
             q.setSource("1");
             q.setStatus("0");
             questionMapper.insertExamQuestion(q);
+            oldStems.add(q.getStem());
             saved++;
         }
         if (saved == 0 && duplicated == 0)
@@ -211,6 +215,7 @@ public class ExamQuestionController extends BaseController
             return error("知识点不存在");
         }
         int saved = 0, duplicated = 0;
+        List<String> oldStems = questionMapper.selectAllStems();
         for (Map<String, Object> row : questions)
         {
             ExamQuestion q = new ExamQuestion();
@@ -231,12 +236,13 @@ public class ExamQuestionController extends BaseController
             {
                 continue;
             }
-            if (questionMapper.countByStem(q.getStem()) > 0)
+            if (isDuplicate(q.getStem(), oldStems))
             {
                 duplicated++;
                 continue;
             }
             questionMapper.insertExamQuestion(q);
+            oldStems.add(q.getStem());
             saved++;
         }
         return AjaxResult.success("已入库 " + saved + " 道题，进入待审队列"
@@ -327,6 +333,60 @@ public class ExamQuestionController extends BaseController
         log.setReason(reason);
         log.setReviewerId(reviewerId);
         reviewLogMapper.insertExamReviewLog(log);
+    }
+
+    // 和已有题目比一遍，相似度超过阈值就当重复
+    private boolean isDuplicate(String stem, List<String> oldStems)
+    {
+        String newStem = cleanStem(stem);
+        for (String old : oldStems)
+        {
+            if (old != null && similar(newStem, cleanStem(old)) >= SIMILAR_LIMIT)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 比较前先去掉空格和常见标点
+    private String cleanStem(String s)
+    {
+        return s.toLowerCase().replace(" ", "").replace("　", "")
+                .replace("，", "").replace("。", "");
+    }
+
+    // 编辑距离：把 a 改成 b 最少要增、删、换几个字
+    private int distance(String a, String b)
+    {
+        int[][] d = new int[a.length() + 1][b.length() + 1];
+        for (int i = 0; i <= a.length(); i++)
+        {
+            d[i][0] = i;
+        }
+        for (int j = 0; j <= b.length(); j++)
+        {
+            d[0][j] = j;
+        }
+        for (int i = 1; i <= a.length(); i++)
+        {
+            for (int j = 1; j <= b.length(); j++)
+            {
+                int cost = a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1;
+                d[i][j] = Math.min(Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1), d[i - 1][j - 1] + cost);
+            }
+        }
+        return d[a.length()][b.length()];
+    }
+
+    private double similar(String a, String b)
+    {
+        int max = Math.max(a.length(), b.length());
+        if (max == 0)
+        {
+            return 1;
+        }
+        return 1.0 * (max - distance(a, b)) / max;
     }
 
     private String str(Object o)

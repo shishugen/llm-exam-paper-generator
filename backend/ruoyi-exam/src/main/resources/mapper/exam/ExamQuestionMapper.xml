@@ -172,11 +172,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           AND id NOT IN
           <foreach collection="excludeIds" item="id" open="(" separator="," close=")">#{id}</foreach>
         </if>
+        <if test="excludeKnowledgeIds != null and excludeKnowledgeIds.size() > 0">
+          AND knowledge_id NOT IN
+          <foreach collection="excludeKnowledgeIds" item="kid" open="(" separator="," close=")">#{kid}</foreach>
+        </if>
         ORDER BY RAND() LIMIT #{limit}
     </select>
 
-    <select id="countByStem" resultType="int">
-        SELECT COUNT(*) FROM exam_question WHERE stem = #{stem}
+    <!-- 出题前把已有题干查回来，在 Java 里算相似度 -->
+    <select id="selectAllStems" resultType="String">
+        SELECT stem FROM exam_question WHERE stem IS NOT NULL
     </select>
 
     <select id="selectRejectReason" resultType="String">

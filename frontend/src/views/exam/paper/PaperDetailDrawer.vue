@@ -14,7 +14,7 @@
 
     <el-alert v-if="coverage.total && coverage.rate < 60" type="warning" :closable="false" show-icon
       class="mb8" title="知识点覆盖率偏低"
-      description="建议补充该课程的题目后再重新组卷；覆盖率只统计展示，不影响本卷使用。" />
+      description="建议补充该课程的题目后再重新组卷；覆盖率目标仅作参考，抽题时已尽量分散知识点。" />
 
     <div v-loading="loading" class="q-list">
       <el-empty v-if="!loading && rows.length === 0" description="这份试卷还没有题目" :image-size="80" />
@@ -45,6 +45,16 @@
       </div>
     </div>
   </el-drawer>
+
+  <!-- 点导出后先选要导出的内容 -->
+  <el-dialog title="选择导出内容" v-model="exportOpen" width="420px" append-to-body>
+    <div class="export-tip">请选择要导出的内容：</div>
+    <div class="export-btns">
+      <el-button @click="doExport('paper')">只导出试题卷</el-button>
+      <el-button @click="doExport('answer')">只导出答案卷</el-button>
+      <el-button type="primary" @click="doExport('all')">试题卷 + 答案卷（全部）</el-button>
+    </div>
+  </el-dialog>
 </template>
 
 <script setup name="PaperDetailDrawer">
@@ -87,8 +97,17 @@ function handleLock(row) {
   })
 }
 
+const exportOpen = ref(false)
+
 function handleExport() {
-  exportPaper(props.paperId, (paper.value.title || '试卷') + '.docx')
+  exportOpen.value = true
+}
+
+function doExport(type) {
+  const name = paper.value.title || '试卷'
+  const suffix = type === 'paper' ? '_试题卷' : (type === 'answer' ? '_答案卷' : '_试题卷及答案卷')
+  exportPaper(props.paperId, type, name + suffix + '.docx')
+  exportOpen.value = false
 }
 
 // options 在库里是 JSON 字符串，转成数组渲染
@@ -134,4 +153,6 @@ load()
   white-space: pre-wrap; word-break: break-word;
 }
 .q-line .ans { color: #67c23a; font-weight: 600; }
+.export-tip { margin-bottom: 12px; color: #606266; }
+.export-btns { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 </style>

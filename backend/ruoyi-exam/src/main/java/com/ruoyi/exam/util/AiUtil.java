@@ -13,6 +13,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.ResponseFormatJsonObject;
 import com.openai.models.chat.completions.ChatCompletion;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import com.ruoyi.exam.domain.ExamAiCallLog;
@@ -61,8 +62,26 @@ public class AiUtil
                 ExamModelConfig config = getModelConfig();
                 String promptText = getPromptText();
                 modelName = config.getModelName();
-                JSONObject data = callApi(config, promptText, knowledgeName,
-                        type, difficulty, count, rejectReason);
+                JSONObject data = null;
+                String lastError = null;
+                // 第一次带 JSON 模式，失败后去掉参数再试一次
+                for (int i = 0; i < 2; i++)
+                {
+                    try
+                    {
+                        data = callApi(config, promptText, knowledgeName, type,
+                                difficulty, count, rejectReason, i == 0);
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        lastError = e.getMessage();
+                    }
+                }
+                if (data == null)
+                {
+                    throw new RuntimeException(lastError == null ? "调用大模型失败，请重试" : lastError);
+                }
                 content = data.getString("content");
                 inTokens = data.getIntValue("inTokens");
                 outTokens = data.getIntValue("outTokens");
@@ -127,7 +146,8 @@ public class AiUtil
 
     // 调大模型接口，取回答文字和用了多少 token
     private JSONObject callApi(ExamModelConfig config, String promptText, String knowledgeName,
-                               String type, String difficulty, int count, String rejectReason)
+                               String type, String difficulty, int count, String rejectReason,
+                               boolean jsonMode)
     {
         String tip = (rejectReason == null || rejectReason.isEmpty()) ? ""
                 : "上次该知识点的题目被驳回，原因是：" + rejectReason + "，请避免同类问题。";
@@ -142,12 +162,15 @@ public class AiUtil
                 .apiKey(KeyUtil.decrypt(config.getApiKey()))
                 .baseUrl(config.getBaseUrl())
                 .build();
-        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+        ChatCompletionCreateParams.Builder builder = ChatCompletionCreateParams.builder()
                 .model(config.getModelName())
                 .addSystemMessage("只输出 JSON 数组")
-                .addUserMessage(prompt)
-                .build();
-        ChatCompletion completion = client.chat().completions().create(params);
+                .addUserMessage(prompt);
+        if (jsonMode)
+        {
+            builder.responseFormat(ResponseFormatJsonObject.builder().build());
+        }
+        ChatCompletion completion = client.chat().completions().create(builder.build());
 
         JSONObject data = new JSONObject();
         data.put("content", completion.choices().get(0).message().content().orElse(""));

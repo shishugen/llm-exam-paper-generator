@@ -39,7 +39,7 @@
 
           <el-form-item label="覆盖率目标">
             <el-input-number v-model="form.coverage" :min="0" :max="100" />
-            <span class="ml8 tip-text">%，仅作目标值</span>
+            <span class="ml8 tip-text">%，目标值仅供参考</span>
           </el-form-item>
         </el-form>
 
@@ -83,7 +83,7 @@
           <el-tag type="success">
             知识点覆盖率 {{ result.coverage.covered || 0 }}/{{ result.coverage.total || 0 }}（{{ result.coverage.rate || 0 }}%）
           </el-tag>
-          <span class="tip-text ml8">覆盖率只统计展示，不影响保存</span>
+          <span class="tip-text ml8">抽题时优先选未覆盖的知识点</span>
         </div>
       </div>
     </div>
