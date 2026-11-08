@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.exam.mapper.ExamChapterMapper">
+    
+    <resultMap type="ExamChapter" id="ExamChapterResult">
+        <result property="id"    column="id"    />
+        <result property="courseId"    column="course_id"    />
+        <result property="courseName"    column="course_name"    />
+        <result property="name"    column="name"    />
+        <result property="sortNo"    column="sort_no"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <!-- 关联课程表取课程名称，页面就不用显示课程ID -->
+    <sql id="selectExamChapterVo">
+        select c.id, c.course_id, c.name, c.sort_no, c.create_by, c.create_time, c.update_by, c.update_time,
+               co.course_name
+        from exam_chapter c
+        left join exam_course co on co.id = c.course_id
+    </sql>
+
+    <select id="selectExamChapterList" parameterType="ExamChapter" resultMap="ExamChapterResult">
+        <include refid="selectExamChapterVo"/>
+        <where>  
+            <if test="courseId != null "> and c.course_id = #{courseId}</if>
+            <if test="courseName != null  and courseName != ''"> and co.course_name like concat('%', #{courseName}, '%')</if>
+            <if test="name != null  and name != ''"> and c.name like concat('%', #{name}, '%')</if>
+            <if test="sortNo != null "> and c.sort_no = #{sortNo}</if>
+        </where>
+    </select>
+    
+    <select id="selectExamChapterById" parameterType="Long" resultMap="ExamChapterResult">
+        <include refid="selectExamChapterVo"/>
+        where c.id = #{id}
+    </select>
+
+    <insert id="insertExamChapter" parameterType="ExamChapter" useGeneratedKeys="true" keyProperty="id">
+        insert into exam_chapter
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="courseId != null">course_id,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="sortNo != null">sort_no,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="courseId != null">#{courseId},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="sortNo != null">#{sortNo},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateExamChapter" parameterType="ExamChapter">
+        update exam_chapter
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="courseId != null">course_id = #{courseId},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="sortNo != null">sort_no = #{sortNo},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteExamChapterById" parameterType="Long">
+        delete from exam_chapter where id = #{id}
+    </delete>
+
+    <delete id="deleteExamChapterByIds" parameterType="String">
+        delete from exam_chapter where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

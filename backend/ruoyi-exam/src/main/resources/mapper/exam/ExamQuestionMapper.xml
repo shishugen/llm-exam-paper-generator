@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.exam.mapper.ExamQuestionMapper">
+    
+    <resultMap type="ExamQuestion" id="ExamQuestionResult">
+        <result property="id"    column="id"    />
+        <result property="courseId"    column="course_id"    />
+        <result property="chapterId"    column="chapter_id"    />
+        <result property="knowledgeId"    column="knowledge_id"    />
+        <result property="courseName"    column="course_name"    />
+        <result property="chapterName"    column="chapter_name"    />
+        <result property="knowledgeName"    column="knowledge_name"    />
+        <result property="type"    column="type"    />
+        <result property="difficulty"    column="difficulty"    />
+        <result property="stem"    column="stem"    />
+        <result property="options"    column="options"    />
+        <result property="answer"    column="answer"    />
+        <result property="analysis"    column="analysis"    />
+        <result property="score"    column="score"    />
+        <result property="status"    column="status"    />
+        <result property="source"    column="source"    />
+        <result property="rejectReason"    column="reject_reason"    />
+        <result property="reviewerId"    column="reviewer_id"    />
+        <result property="reviewerName"    column="reviewer_name"    />
+        <result property="reviewTime"    column="review_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectExamQuestionVo">
+        select q.id, q.course_id, q.chapter_id, q.knowledge_id, q.type, q.difficulty, q.stem, q.options, q.answer, q.analysis, q.score, q.status, q.source, q.reject_reason, q.reviewer_id, q.review_time, q.create_by, q.create_time, q.update_by, q.update_time,
+               c.course_name, ch.name as chapter_name, k.name as knowledge_name,
+               ru.user_name as reviewer_name
+        from exam_question q
+        left join exam_course c on c.id = q.course_id
+        left join exam_chapter ch on ch.id = q.chapter_id
+        left join exam_knowledge k on k.id = q.knowledge_id
+        left join sys_user ru on ru.user_id = q.reviewer_id
+    </sql>
+
+    <select id="selectExamQuestionList" parameterType="ExamQuestion" resultMap="ExamQuestionResult">
+        <include refid="selectExamQuestionVo"/>
+        <where>  
+            <if test="courseId != null "> and q.course_id = #{courseId}</if>
+            <if test="chapterId != null "> and q.chapter_id = #{chapterId}</if>
+            <if test="knowledgeId != null "> and q.knowledge_id = #{knowledgeId}</if>
+            <if test="type != null  and type != ''"> and q.type = #{type}</if>
+            <if test="difficulty != null  and difficulty != ''"> and q.difficulty = #{difficulty}</if>
+            <if test="stem != null  and stem != ''"> and q.stem = #{stem}</if>
+            <if test="options != null  and options != ''"> and q.options = #{options}</if>
+            <if test="answer != null  and answer != ''"> and q.answer = #{answer}</if>
+            <if test="analysis != null  and analysis != ''"> and q.analysis = #{analysis}</if>
+            <if test="score != null "> and q.score = #{score}</if>
+            <if test="status != null  and status != ''"> and q.status = #{status}</if>
+            <if test="source != null  and source != ''"> and q.source = #{source}</if>
+            <if test="rejectReason != null  and rejectReason != ''"> and q.reject_reason = #{rejectReason}</if>
+            <if test="reviewerId != null "> and q.reviewer_id = #{reviewerId}</if>
+            <if test="reviewTime != null "> and q.review_time = #{reviewTime}</if>
+        </where>
+    </select>
+    
+    <select id="selectExamQuestionById" parameterType="Long" resultMap="ExamQuestionResult">
+        <include refid="selectExamQuestionVo"/>
+        where q.id = #{id}
+    </select>
+
+    <insert id="insertExamQuestion" parameterType="ExamQuestion" useGeneratedKeys="true" keyProperty="id">
+        insert into exam_question
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="courseId != null">course_id,</if>
+            <if test="chapterId != null">chapter_id,</if>
+            <if test="knowledgeId != null">knowledge_id,</if>
+            <if test="type != null and type != ''">type,</if>
+            <if test="difficulty != null and difficulty != ''">difficulty,</if>
+            <if test="stem != null and stem != ''">stem,</if>
+            <if test="options != null">options,</if>
+            <if test="answer != null">answer,</if>
+            <if test="analysis != null">analysis,</if>
+            <if test="score != null">score,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="source != null and source != ''">source,</if>
+            <if test="rejectReason != null">reject_reason,</if>
+            <if test="reviewerId != null">reviewer_id,</if>
+            <if test="reviewTime != null">review_time,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="courseId != null">#{courseId},</if>
+            <if test="chapterId != null">#{chapterId},</if>
+            <if test="knowledgeId != null">#{knowledgeId},</if>
+            <if test="type != null and type != ''">#{type},</if>
+            <if test="difficulty != null and difficulty != ''">#{difficulty},</if>
+            <if test="stem != null and stem != ''">#{stem},</if>
+            <if test="options != null">#{options},</if>
+            <if test="answer != null">#{answer},</if>
+            <if test="analysis != null">#{analysis},</if>
+            <if test="score != null">#{score},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="source != null and source != ''">#{source},</if>
+            <if test="rejectReason != null">#{rejectReason},</if>
+            <if test="reviewerId != null">#{reviewerId},</if>
+            <if test="reviewTime != null">#{reviewTime},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateExamQuestion" parameterType="ExamQuestion">
+        update exam_question
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="courseId != null">course_id = #{courseId},</if>
+            <if test="chapterId != null">chapter_id = #{chapterId},</if>
+            <if test="knowledgeId != null">knowledge_id = #{knowledgeId},</if>
+            <if test="type != null and type != ''">type = #{type},</if>
+            <if test="difficulty != null and difficulty != ''">difficulty = #{difficulty},</if>
+            <if test="stem != null and stem != ''">stem = #{stem},</if>
+            <if test="options != null">options = #{options},</if>
+            <if test="answer != null">answer = #{answer},</if>
+            <if test="analysis != null">analysis = #{analysis},</if>
+            <if test="score != null">score = #{score},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="source != null and source != ''">source = #{source},</if>
+            <if test="rejectReason != null">reject_reason = #{rejectReason},</if>
+            <if test="reviewerId != null">reviewer_id = #{reviewerId},</if>
+            <if test="reviewTime != null">review_time = #{reviewTime},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteExamQuestionById" parameterType="Long">
+        delete from exam_question where id = #{id}
+    </delete>
+
+    <delete id="deleteExamQuestionByIds" parameterType="String">
+        delete from exam_question where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 注意：这里必须逐列写别名。全局没开驼峰映射，SELECT * 的 course_id/knowledge_id
+         映射不到实体的 courseId/knowledgeId，会导致覆盖率和单题替换取不到课程 -->
+    <select id="selectRandomQuestions" resultType="ExamQuestion">
+        SELECT id, course_id AS courseId, chapter_id AS chapterId, knowledge_id AS knowledgeId,
+               type, difficulty, stem, options, answer, analysis, score, status, source,
+               reject_reason AS rejectReason, reviewer_id AS reviewerId, review_time AS reviewTime,
+               create_by AS createBy, create_time AS createTime, update_by AS updateBy, update_time AS updateTime
+        FROM exam_question
+        WHERE course_id = #{courseId}
+          AND status = '2'
+          AND type = #{type}
+          AND difficulty = #{difficulty}
+        <if test="chapterIds != null and chapterIds.size() > 0">
+          AND chapter_id IN
+          <foreach collection="chapterIds" item="cid" open="(" separator="," close=")">#{cid}</foreach>
+        </if>
+        <if test="excludeIds != null and excludeIds.size() > 0">
+          AND id NOT IN
+          <foreach collection="excludeIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        </if>
+        ORDER BY RAND() LIMIT #{limit}
+    </select>
+
+    <select id="countByStem" resultType="int">
+        SELECT COUNT(*) FROM exam_question WHERE stem = #{stem}
+    </select>
+
+    <select id="selectRejectReason" resultType="String">
+        SELECT reject_reason FROM exam_question
+        WHERE knowledge_id = #{knowledgeId} AND status = '3' AND reject_reason IS NOT NULL
+        ORDER BY id DESC LIMIT 1
+    </select>
+
+</mapper>

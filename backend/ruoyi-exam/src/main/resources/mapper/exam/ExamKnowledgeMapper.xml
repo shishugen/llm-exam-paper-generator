@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.exam.mapper.ExamKnowledgeMapper">
+    
+    <resultMap type="ExamKnowledge" id="ExamKnowledgeResult">
+        <result property="id"    column="id"    />
+        <result property="chapterId"    column="chapter_id"    />
+        <result property="chapterName"    column="chapter_name"    />
+        <result property="name"    column="name"    />
+        <result property="weight"    column="weight"    />
+        <result property="sortNo"    column="sort_no"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <!-- 关联章节表取章节名称，页面就不用显示章节ID -->
+    <sql id="selectExamKnowledgeVo">
+        select k.id, k.chapter_id, k.name, k.weight, k.sort_no, k.create_by, k.create_time, k.update_by, k.update_time,
+               ch.name as chapter_name
+        from exam_knowledge k
+        left join exam_chapter ch on ch.id = k.chapter_id
+    </sql>
+
+    <select id="selectExamKnowledgeList" parameterType="ExamKnowledge" resultMap="ExamKnowledgeResult">
+        <include refid="selectExamKnowledgeVo"/>
+        <where>  
+            <if test="chapterId != null "> and k.chapter_id = #{chapterId}</if>
+            <if test="chapterName != null  and chapterName != ''"> and ch.name like concat('%', #{chapterName}, '%')</if>
+            <if test="name != null  and name != ''"> and k.name like concat('%', #{name}, '%')</if>
+            <if test="weight != null "> and k.weight = #{weight}</if>
+            <if test="sortNo != null "> and k.sort_no = #{sortNo}</if>
+        </where>
+    </select>
+    
+    <select id="selectExamKnowledgeById" parameterType="Long" resultMap="ExamKnowledgeResult">
+        <include refid="selectExamKnowledgeVo"/>
+        where k.id = #{id}
+    </select>
+
+    <insert id="insertExamKnowledge" parameterType="ExamKnowledge" useGeneratedKeys="true" keyProperty="id">
+        insert into exam_knowledge
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="chapterId != null">chapter_id,</if>
+            <if test="name != null and name != ''">name,</if>
+            <if test="weight != null">weight,</if>
+            <if test="sortNo != null">sort_no,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="chapterId != null">#{chapterId},</if>
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="weight != null">#{weight},</if>
+            <if test="sortNo != null">#{sortNo},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateExamKnowledge" parameterType="ExamKnowledge">
+        update exam_knowledge
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="chapterId != null">chapter_id = #{chapterId},</if>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="weight != null">weight = #{weight},</if>
+            <if test="sortNo != null">sort_no = #{sortNo},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteExamKnowledgeById" parameterType="Long">
+        delete from exam_knowledge where id = #{id}
+    </delete>
+
+    <delete id="deleteExamKnowledgeByIds" parameterType="String">
+        delete from exam_knowledge where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 按知识点反查名称 / 所属课程 / 所属章节，AI 出题时用 -->
+    <select id="selectKnowledgeName" resultType="String">
+        SELECT name FROM exam_knowledge WHERE id = #{knowledgeId}
+    </select>
+
+    <select id="selectCourseIdByKnowledge" resultType="Long">
+        SELECT c.course_id FROM exam_knowledge k
+        JOIN exam_chapter c ON c.id = k.chapter_id
+        WHERE k.id = #{knowledgeId}
+    </select>
+
+    <select id="selectChapterIdByKnowledge" resultType="Long">
+        SELECT chapter_id FROM exam_knowledge WHERE id = #{knowledgeId}
+    </select>
+
+</mapper>

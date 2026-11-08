@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.exam.mapper.ExamReviewLogMapper">
+    
+    <resultMap type="ExamReviewLog" id="ExamReviewLogResult">
+        <result property="id"    column="id"    />
+        <result property="questionId"    column="question_id"    />
+        <result property="questionName"    column="question_name"    />
+        <result property="action"    column="action"    />
+        <result property="reason"    column="reason"    />
+        <result property="reviewerId"    column="reviewer_id"    />
+        <result property="reviewerName"    column="reviewer_name"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <!-- 关联题目表取题干、关联用户表取操作人姓名，页面就不用显示 ID 了 -->
+    <sql id="selectExamReviewLogVo">
+        select r.id, r.question_id, r.action, r.reason, r.reviewer_id, r.create_by, r.create_time, r.update_by, r.update_time,
+               q.stem as question_name, u.nick_name as reviewer_name
+        from exam_review_log r
+        left join exam_question q on q.id = r.question_id
+        left join sys_user u on u.user_id = r.reviewer_id
+    </sql>
+
+    <select id="selectExamReviewLogList" parameterType="ExamReviewLog" resultMap="ExamReviewLogResult">
+        <include refid="selectExamReviewLogVo"/>
+        <where>  
+            <if test="questionId != null "> and r.question_id = #{questionId}</if>
+            <if test="questionName != null  and questionName != ''"> and q.stem like concat('%', #{questionName}, '%')</if>
+            <if test="action != null  and action != ''"> and r.action = #{action}</if>
+            <if test="reason != null  and reason != ''"> and r.reason = #{reason}</if>
+            <if test="reviewerId != null "> and r.reviewer_id = #{reviewerId}</if>
+            <if test="reviewerName != null  and reviewerName != ''"> and u.nick_name like concat('%', #{reviewerName}, '%')</if>
+        </where>
+        order by r.id desc
+    </select>
+    
+    <select id="selectExamReviewLogById" parameterType="Long" resultMap="ExamReviewLogResult">
+        <include refid="selectExamReviewLogVo"/>
+        where r.id = #{id}
+    </select>
+
+    <insert id="insertExamReviewLog" parameterType="ExamReviewLog" useGeneratedKeys="true" keyProperty="id">
+        insert into exam_review_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="questionId != null">question_id,</if>
+            <if test="action != null and action != ''">action,</if>
+            <if test="reason != null">reason,</if>
+            <if test="reviewerId != null">reviewer_id,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="questionId != null">#{questionId},</if>
+            <if test="action != null and action != ''">#{action},</if>
+            <if test="reason != null">#{reason},</if>
+            <if test="reviewerId != null">#{reviewerId},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateExamReviewLog" parameterType="ExamReviewLog">
+        update exam_review_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="questionId != null">question_id = #{questionId},</if>
+            <if test="action != null and action != ''">action = #{action},</if>
+            <if test="reason != null">reason = #{reason},</if>
+            <if test="reviewerId != null">reviewer_id = #{reviewerId},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteExamReviewLogById" parameterType="Long">
+        delete from exam_review_log where id = #{id}
+    </delete>
+
+    <delete id="deleteExamReviewLogByIds" parameterType="String">
+        delete from exam_review_log where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

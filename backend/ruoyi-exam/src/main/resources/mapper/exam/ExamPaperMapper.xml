@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.exam.mapper.ExamPaperMapper">
+    
+    <resultMap type="ExamPaper" id="ExamPaperResult">
+        <result property="id"    column="id"    />
+        <result property="courseId"    column="course_id"    />
+        <result property="courseName"    column="course_name"    />
+        <result property="title"    column="title"    />
+        <result property="totalScore"    column="total_score"    />
+        <result property="configJson"    column="config_json"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <!-- 关联课程表取课程名称，页面就不用显示课程ID -->
+    <sql id="selectExamPaperVo">
+        select p.id, p.course_id, p.title, p.total_score, p.config_json, p.status, p.create_by, p.create_time, p.update_by, p.update_time,
+               c.course_name
+        from exam_paper p
+        left join exam_course c on c.id = p.course_id
+    </sql>
+
+    <select id="selectExamPaperList" parameterType="ExamPaper" resultMap="ExamPaperResult">
+        <include refid="selectExamPaperVo"/>
+        <where>  
+            <if test="courseId != null "> and p.course_id = #{courseId}</if>
+            <if test="courseName != null  and courseName != ''"> and c.course_name like concat('%', #{courseName}, '%')</if>
+            <if test="title != null  and title != ''"> and p.title like concat('%', #{title}, '%')</if>
+            <if test="totalScore != null "> and p.total_score = #{totalScore}</if>
+            <if test="configJson != null  and configJson != ''"> and p.config_json = #{configJson}</if>
+            <if test="status != null  and status != ''"> and p.status = #{status}</if>
+        </where>
+        order by p.id desc
+    </select>
+    
+    <select id="selectExamPaperById" parameterType="Long" resultMap="ExamPaperResult">
+        <include refid="selectExamPaperVo"/>
+        where p.id = #{id}
+    </select>
+
+    <insert id="insertExamPaper" parameterType="ExamPaper" useGeneratedKeys="true" keyProperty="id">
+        insert into exam_paper
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="courseId != null">course_id,</if>
+            <if test="title != null and title != ''">title,</if>
+            <if test="totalScore != null">total_score,</if>
+            <if test="configJson != null">config_json,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="courseId != null">#{courseId},</if>
+            <if test="title != null and title != ''">#{title},</if>
+            <if test="totalScore != null">#{totalScore},</if>
+            <if test="configJson != null">#{configJson},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateExamPaper" parameterType="ExamPaper">
+        update exam_paper
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="courseId != null">course_id = #{courseId},</if>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="totalScore != null">total_score = #{totalScore},</if>
+            <if test="configJson != null">config_json = #{configJson},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteExamPaperById" parameterType="Long">
+        delete from exam_paper where id = #{id}
+    </delete>
+
+    <delete id="deleteExamPaperByIds" parameterType="String">
+        delete from exam_paper where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 知识点覆盖率：已覆盖数 / 分母（整门课程或指定章节） -->
+    <select id="countKnowledgeInPaper" resultType="int">
+        SELECT COUNT(DISTINCT q.knowledge_id) FROM exam_paper_question pq
+        JOIN exam_question q ON q.id = pq.question_id
+        WHERE pq.paper_id = #{paperId}
+    </select>
+
+    <select id="countKnowledgeTotal" resultType="int">
+        SELECT COUNT(*) FROM exam_knowledge k
+        JOIN exam_chapter c ON c.id = k.chapter_id
+        WHERE c.course_id = #{courseId}
+    </select>
+
+    <select id="countKnowledgeTotalByChapters" resultType="int">
+        SELECT COUNT(*) FROM exam_knowledge
+        WHERE chapter_id IN
+        <foreach collection="chapterIds" item="cid" open="(" separator="," close=")">#{cid}</foreach>
+    </select>
+
+    <!-- 试卷详情：明细联查题目，给页面和 Word 导出用 -->
+    <select id="selectPaperDetail" resultType="java.util.Map">
+        SELECT pq.id AS detailId, pq.sort_no AS sortNo, pq.score AS score, pq.locked AS locked,
+               q.id AS questionId, q.type AS type, q.difficulty AS difficulty,
+               q.stem AS stem, q.options AS options, q.answer AS answer,
+               q.analysis AS analysis, q.knowledge_id AS knowledgeId
+        FROM exam_paper_question pq
+        JOIN exam_question q ON q.id = pq.question_id
+        WHERE pq.paper_id = #{paperId}
+        ORDER BY pq.sort_no
+    </select>
+
+</mapper>

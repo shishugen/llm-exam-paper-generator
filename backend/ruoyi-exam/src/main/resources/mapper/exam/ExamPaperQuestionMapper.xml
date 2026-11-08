@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.exam.mapper.ExamPaperQuestionMapper">
+    
+    <resultMap type="ExamPaperQuestion" id="ExamPaperQuestionResult">
+        <result property="id"    column="id"    />
+        <result property="paperId"    column="paper_id"    />
+        <result property="paperName"    column="paper_name"    />
+        <result property="questionId"    column="question_id"    />
+        <result property="questionStem"    column="question_stem"    />
+        <result property="sortNo"    column="sort_no"    />
+        <result property="score"    column="score"    />
+        <result property="locked"    column="locked"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <!-- 关联试卷表和题库表，页面显示试卷名称和题干，不用显示 ID -->
+    <sql id="selectExamPaperQuestionVo">
+        select pq.id, pq.paper_id, pq.question_id, pq.sort_no, pq.score, pq.locked,
+               pq.create_by, pq.create_time, pq.update_by, pq.update_time,
+               p.title as paper_name, q.stem as question_stem
+        from exam_paper_question pq
+        left join exam_paper p on p.id = pq.paper_id
+        left join exam_question q on q.id = pq.question_id
+    </sql>
+
+    <select id="selectExamPaperQuestionList" parameterType="ExamPaperQuestion" resultMap="ExamPaperQuestionResult">
+        <include refid="selectExamPaperQuestionVo"/>
+        <where>  
+            <if test="paperId != null "> and pq.paper_id = #{paperId}</if>
+            <if test="paperName != null  and paperName != ''"> and p.title like concat('%', #{paperName}, '%')</if>
+            <if test="questionId != null "> and pq.question_id = #{questionId}</if>
+            <if test="questionStem != null  and questionStem != ''"> and q.stem like concat('%', #{questionStem}, '%')</if>
+            <if test="sortNo != null "> and pq.sort_no = #{sortNo}</if>
+            <if test="score != null "> and pq.score = #{score}</if>
+            <if test="locked != null  and locked != ''"> and pq.locked = #{locked}</if>
+        </where>
+        order by pq.paper_id desc, pq.sort_no asc
+    </select>
+    
+    <select id="selectExamPaperQuestionById" parameterType="Long" resultMap="ExamPaperQuestionResult">
+        <include refid="selectExamPaperQuestionVo"/>
+        where pq.id = #{id}
+    </select>
+
+    <insert id="insertExamPaperQuestion" parameterType="ExamPaperQuestion" useGeneratedKeys="true" keyProperty="id">
+        insert into exam_paper_question
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="paperId != null">paper_id,</if>
+            <if test="questionId != null">question_id,</if>
+            <if test="sortNo != null">sort_no,</if>
+            <if test="score != null">score,</if>
+            <if test="locked != null and locked != ''">locked,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="paperId != null">#{paperId},</if>
+            <if test="questionId != null">#{questionId},</if>
+            <if test="sortNo != null">#{sortNo},</if>
+            <if test="score != null">#{score},</if>
+            <if test="locked != null and locked != ''">#{locked},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateExamPaperQuestion" parameterType="ExamPaperQuestion">
+        update exam_paper_question
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="paperId != null">paper_id = #{paperId},</if>
+            <if test="questionId != null">question_id = #{questionId},</if>
+            <if test="sortNo != null">sort_no = #{sortNo},</if>
+            <if test="score != null">score = #{score},</if>
+            <if test="locked != null and locked != ''">locked = #{locked},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteExamPaperQuestionById" parameterType="Long">
+        delete from exam_paper_question where id = #{id}
+    </delete>
+
+    <delete id="deleteExamPaperQuestionByIds" parameterType="String">
+        delete from exam_paper_question where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

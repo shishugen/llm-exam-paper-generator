@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.exam.mapper.ExamAiCallLogMapper">
+    
+    <resultMap type="ExamAiCallLog" id="ExamAiCallLogResult">
+        <result property="id"    column="id"    />
+        <result property="taskType"    column="task_type"    />
+        <result property="model"    column="model"    />
+        <result property="promptTokens"    column="prompt_tokens"    />
+        <result property="completionTokens"    column="completion_tokens"    />
+        <result property="durationMs"    column="duration_ms"    />
+        <result property="cost"    column="cost"    />
+        <result property="status"    column="status"    />
+        <result property="errorMsg"    column="error_msg"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectExamAiCallLogVo">
+        select id, task_type, model, prompt_tokens, completion_tokens, duration_ms, cost, status, error_msg, create_by, create_time, update_by, update_time from exam_ai_call_log
+    </sql>
+
+    <select id="selectExamAiCallLogList" parameterType="ExamAiCallLog" resultMap="ExamAiCallLogResult">
+        <include refid="selectExamAiCallLogVo"/>
+        <where>  
+            <if test="taskType != null  and taskType != ''"> and task_type = #{taskType}</if>
+            <if test="model != null  and model != ''"> and model = #{model}</if>
+            <if test="promptTokens != null "> and prompt_tokens = #{promptTokens}</if>
+            <if test="completionTokens != null "> and completion_tokens = #{completionTokens}</if>
+            <if test="durationMs != null "> and duration_ms = #{durationMs}</if>
+            <if test="cost != null "> and cost = #{cost}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="errorMsg != null  and errorMsg != ''"> and error_msg = #{errorMsg}</if>
+        </where>
+        order by id desc
+    </select>
+    
+    <select id="selectExamAiCallLogById" parameterType="Long" resultMap="ExamAiCallLogResult">
+        <include refid="selectExamAiCallLogVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertExamAiCallLog" parameterType="ExamAiCallLog" useGeneratedKeys="true" keyProperty="id">
+        insert into exam_ai_call_log
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="taskType != null">task_type,</if>
+            <if test="model != null">model,</if>
+            <if test="promptTokens != null">prompt_tokens,</if>
+            <if test="completionTokens != null">completion_tokens,</if>
+            <if test="durationMs != null">duration_ms,</if>
+            <if test="cost != null">cost,</if>
+            <if test="status != null">status,</if>
+            <if test="errorMsg != null">error_msg,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="taskType != null">#{taskType},</if>
+            <if test="model != null">#{model},</if>
+            <if test="promptTokens != null">#{promptTokens},</if>
+            <if test="completionTokens != null">#{completionTokens},</if>
+            <if test="durationMs != null">#{durationMs},</if>
+            <if test="cost != null">#{cost},</if>
+            <if test="status != null">#{status},</if>
+            <if test="errorMsg != null">#{errorMsg},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateExamAiCallLog" parameterType="ExamAiCallLog">
+        update exam_ai_call_log
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="taskType != null">task_type = #{taskType},</if>
+            <if test="model != null">model = #{model},</if>
+            <if test="promptTokens != null">prompt_tokens = #{promptTokens},</if>
+            <if test="completionTokens != null">completion_tokens = #{completionTokens},</if>
+            <if test="durationMs != null">duration_ms = #{durationMs},</if>
+            <if test="cost != null">cost = #{cost},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="errorMsg != null">error_msg = #{errorMsg},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteExamAiCallLogById" parameterType="Long">
+        delete from exam_ai_call_log where id = #{id}
+    </delete>
+
+    <delete id="deleteExamAiCallLogByIds" parameterType="String">
+        delete from exam_ai_call_log where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 调用统计：次数 / Token / 平均耗时 / 费用 / 成功次数 -->
+    <select id="selectCallStats" resultType="java.util.Map">
+        SELECT COUNT(*) AS totalCalls,
+               COALESCE(SUM(prompt_tokens + completion_tokens), 0) AS totalTokens,
+               COALESCE(ROUND(AVG(duration_ms)), 0) AS avgDuration,
+               COALESCE(SUM(cost), 0) AS totalCost,
+               COALESCE(SUM(status = '0'), 0) AS successCalls
+        FROM exam_ai_call_log
+    </select>
+
+</mapper>

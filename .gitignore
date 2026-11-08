@@ -1,0 +1,14 @@
+# 依赖与构建产物（体积极大，不入库）
+**/node_modules/
+**/target/
+**/dist/
+*.jar
+*.log
+
+# 本地环境文件
+.DS_Store
+**/.DS_Store
+*.swp
+.~*
+uploadPath/
+.env.local
