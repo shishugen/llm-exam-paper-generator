@@ -98,16 +98,6 @@
       </el-col>
       <el-col :span="1.5">
         <el-button
-          type="success"
-          plain
-          icon="Edit"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['exam:question:edit']"
-        >修改</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
           type="danger"
           plain
           icon="Delete"
@@ -115,15 +105,6 @@
           @click="handleDelete"
           v-hasPermi="['exam:question:remove']"
         >删除</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['exam:question:export']"
-        >导出</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="primary" plain icon="MagicStick" @click="aiDialog = true"
@@ -164,6 +145,7 @@
           <dict-tag :options="exam_source" :value="scope.row.source"/>
         </template>
       </el-table-column>
+      
       <el-table-column label="创建时间" align="createTime" prop="createTime" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
@@ -567,13 +549,6 @@ function handleDelete(row) {
     getList()
     proxy.$modal.msgSuccess("删除成功")
   }).catch(() => {})
-}
-
-/** 导出按钮操作 */
-function handleExport() {
-  proxy.download('exam/question/export', {
-    ...queryParams.value
-  }, `question_${new Date().getTime()}.xlsx`)
 }
 
 getList()
