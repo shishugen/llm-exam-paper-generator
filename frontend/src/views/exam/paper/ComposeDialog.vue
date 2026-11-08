@@ -16,7 +16,7 @@
             </el-select>
           </el-form-item>
           <el-form-item label="试卷名称" required>
-            <el-input v-model="form.title" placeholder="例如：数据库原理与应用 期末测验（B 卷）" />
+            <el-input v-model="form.title" placeholder="例如：数据库原理 期末测验（B 卷）" />
           </el-form-item>
           <el-form-item label="总分">
             <el-input-number v-model="form.totalScore" :min="10" :max="150" />
@@ -128,7 +128,7 @@ const form = reactive({
 listCourse({ pageNum: 1, pageSize: 50 }).then(res => {
   courses.value = res.rows || []
   if (courses.value.length === 1) form.courseId = courses.value[0].id
-  if (!form.title) form.title = '数据库原理与应用 期末测验（组卷演示）'
+  if (!form.title) form.title = '数据库原理 期末测验（组卷演示）'
 })
 
 // 换课程就重新加载该课程的章节，已选的章节清空，预览结果作废
