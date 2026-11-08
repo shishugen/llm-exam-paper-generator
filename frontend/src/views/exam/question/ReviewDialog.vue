@@ -38,10 +38,12 @@
 <script setup name="ReviewDialog">
 import { getQuestion } from "@/api/exam/question"
 import { reviewQuestion } from "@/api/exam/question"
+import useUserStore from '@/store/modules/user'
 
 const props = defineProps({ questionId: [Number, String] })
 const emit = defineEmits(['close', 'success'])
 const { proxy } = getCurrentInstance()
+const userStore = useUserStore()
 
 const visible = ref(true)
 const loading = ref(false)
@@ -65,7 +67,8 @@ function submit() {
     return
   }
   loading.value = true
-  reviewQuestion({ questionId: props.questionId, action: form.action, reason: form.reason })
+  reviewQuestion({ questionId: props.questionId, action: form.action, reason: form.reason,
+                  reviewerId: userStore.id })
     .then(res => {
       proxy.$modal.msgSuccess(res.msg || '审核完成')
       emit('success')

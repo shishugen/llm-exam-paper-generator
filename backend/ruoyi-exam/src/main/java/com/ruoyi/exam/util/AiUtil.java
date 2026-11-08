@@ -6,44 +6,38 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.chat.completions.ChatCompletion;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
 import com.ruoyi.exam.domain.ExamAiCallLog;
+import com.ruoyi.exam.domain.ExamModelConfig;
+import com.ruoyi.exam.domain.ExamPrompt;
 import com.ruoyi.exam.domain.ExamQuestion;
 import com.ruoyi.exam.mapper.ExamAiCallLogMapper;
+import com.ruoyi.exam.mapper.ExamModelConfigMapper;
+import com.ruoyi.exam.mapper.ExamPromptMapper;
 
 // AI 出题：拼提示词、调接口、把返回的 JSON 变成题目，最后记一条调用日志
 @Component
 public class AiUtil
 {
-    private static final String PROMPT = "你是高校命题助手。围绕知识点「%s」，出 %d 道%s题，难度%s。%s\n"
-            + "只返回 JSON 数组，不要任何解释文字。每个元素格式："
-            + "{\"stem\":\"题干\",\"options\":[{\"key\":\"A\",\"value\":\"选项内容\"}],"
-            + "\"answer\":\"正确答案\",\"analysis\":\"解析\",\"score\":2}\n"
-            + "注意：题干、选项、解析里一律不要使用英文双引号，需要强调时用《》或括号；文字中不要换行。";
-
     @Value("${llm.mock:true}")
     private boolean mock;
 
-    @Value("${llm.api-url:}")
-    private String apiUrl;
-
-    @Value("${llm.api-key:}")
-    private String apiKey;
-
-    @Value("${llm.model:gpt-4o-mini}")
-    private String model;
-
     @Autowired
     private ExamAiCallLogMapper callLogMapper;
+
+    @Autowired
+    private ExamModelConfigMapper modelConfigMapper;
+
+    @Autowired
+    private ExamPromptMapper promptMapper;
 
     public List<ExamQuestion> generate(String knowledgeName, String type, String difficulty,
                                        int count, String rejectReason)
@@ -51,6 +45,7 @@ public class AiUtil
         long start = System.currentTimeMillis();
         int inTokens = 0, outTokens = 0;
         String status = "0", errorMsg = null;
+        String modelName = mock ? "mock(离线演示)" : "";
         List<ExamQuestion> result = new ArrayList<>();
         try
         {
@@ -63,7 +58,11 @@ public class AiUtil
             }
             else
             {
-                JSONObject data = callApi(knowledgeName, type, difficulty, count, rejectReason);
+                ExamModelConfig config = getModelConfig();
+                String promptText = getPromptText();
+                modelName = config.getModelName();
+                JSONObject data = callApi(config, promptText, knowledgeName,
+                        type, difficulty, count, rejectReason);
                 content = data.getString("content");
                 inTokens = data.getIntValue("inTokens");
                 outTokens = data.getIntValue("outTokens");
@@ -82,7 +81,7 @@ public class AiUtil
         {
             ExamAiCallLog log = new ExamAiCallLog();
             log.setTaskType("1");
-            log.setModel(mock ? "mock(离线演示)" : model);
+            log.setModel(modelName);
             log.setPromptTokens(inTokens);
             log.setCompletionTokens(outTokens);
             log.setDurationMs(System.currentTimeMillis() - start);
@@ -94,44 +93,72 @@ public class AiUtil
         return result;
     }
 
+    // 取启用的那一条模型配置
+    private ExamModelConfig getModelConfig()
+    {
+        List<ExamModelConfig> list = modelConfigMapper.selectExamModelConfigList(new ExamModelConfig());
+        for (ExamModelConfig item : list)
+        {
+            if ("1".equals(item.getIsDefault()))
+            {
+                if (item.getApiKey() == null || item.getApiKey().isEmpty())
+                {
+                    throw new RuntimeException("请先在模型配置里填写密钥");
+                }
+                return item;
+            }
+        }
+        throw new RuntimeException("请先在模型配置里启用一条记录");
+    }
+
+    // 取启用的那一条提示词
+    private String getPromptText()
+    {
+        List<ExamPrompt> list = promptMapper.selectExamPromptList(new ExamPrompt());
+        for (ExamPrompt item : list)
+        {
+            if ("1".equals(item.getIsDefault()))
+            {
+                return item.getContent();
+            }
+        }
+        throw new RuntimeException("请先在提示词里启用一条记录");
+    }
+
     // 调大模型接口，取回答文字和用了多少 token
-    private JSONObject callApi(String knowledgeName, String type, String difficulty,
-                               int count, String rejectReason)
+    private JSONObject callApi(ExamModelConfig config, String promptText, String knowledgeName,
+                               String type, String difficulty, int count, String rejectReason)
     {
         String tip = (rejectReason == null || rejectReason.isEmpty()) ? ""
                 : "上次该知识点的题目被驳回，原因是：" + rejectReason + "，请避免同类问题。";
-        String prompt = String.format(PROMPT, knowledgeName, count,
-                typeName(type), difficultyName(difficulty), tip);
+        String prompt = promptText
+                .replace("{知识点}", knowledgeName)
+                .replace("{题量}", String.valueOf(count))
+                .replace("{题型}", typeName(type))
+                .replace("{难度}", difficultyName(difficulty))
+                .replace("{驳回原因}", tip);
 
-        JSONObject body = new JSONObject();
-        body.put("model", model);
-        JSONArray messages = new JSONArray();
-        JSONObject sys = new JSONObject();
-        sys.put("role", "system");
-        sys.put("content", "只输出 JSON 数组");
-        messages.add(sys);
-        JSONObject user = new JSONObject();
-        user.put("role", "user");
-        user.put("content", prompt);
-        messages.add(user);
-        body.put("messages", messages);
+        OpenAIClient client = OpenAIOkHttpClient.builder()
+                .apiKey(KeyUtil.decrypt(config.getApiKey()))
+                .baseUrl(config.getBaseUrl())
+                .build();
+        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+                .model(config.getModelName())
+                .addSystemMessage("只输出 JSON 数组")
+                .addUserMessage(prompt)
+                .build();
+        ChatCompletion completion = client.chat().completions().create(params);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(8000);
-        factory.setReadTimeout(120000);
-        String raw = new RestTemplate(factory)
-                .postForObject(apiUrl, new HttpEntity<>(body.toString(), headers), String.class);
-
-        JSONObject root = JSON.parseObject(raw);
         JSONObject data = new JSONObject();
-        data.put("content", root.getJSONArray("choices").getJSONObject(0)
-                .getJSONObject("message").getString("content"));
-        JSONObject usage = root.getJSONObject("usage");
-        data.put("inTokens", usage == null ? 0 : usage.getIntValue("prompt_tokens"));
-        data.put("outTokens", usage == null ? 0 : usage.getIntValue("completion_tokens"));
+        data.put("content", completion.choices().get(0).message().content().orElse(""));
+        int inTokens = 0, outTokens = 0;
+        if (completion.usage().isPresent())
+        {
+            inTokens = (int) completion.usage().get().promptTokens();
+            outTokens = (int) completion.usage().get().completionTokens();
+        }
+        data.put("inTokens", inTokens);
+        data.put("outTokens", outTokens);
         return data;
     }
 

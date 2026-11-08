@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.exam.mapper.ExamPromptMapper">
+    
+    <resultMap type="ExamPrompt" id="ExamPromptResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="content"    column="content"    />
+        <result property="isDefault"    column="is_default"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectExamPromptVo">
+        select id, name, content, is_default, create_by, create_time, update_by, update_time from exam_prompt
+    </sql>
+
+    <select id="selectExamPromptList" parameterType="ExamPrompt" resultMap="ExamPromptResult">
+        <include refid="selectExamPromptVo"/>
+        <where>  
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="content != null  and content != ''"> and content = #{content}</if>
+            <if test="isDefault != null  and isDefault != ''"> and is_default = #{isDefault}</if>
+        </where>
+    </select>
+    
+    <select id="selectExamPromptById" parameterType="Long" resultMap="ExamPromptResult">
+        <include refid="selectExamPromptVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertExamPrompt" parameterType="ExamPrompt" useGeneratedKeys="true" keyProperty="id">
+        insert into exam_prompt
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">name,</if>
+            <if test="content != null and content != ''">content,</if>
+            <if test="isDefault != null and isDefault != ''">is_default,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="content != null and content != ''">#{content},</if>
+            <if test="isDefault != null and isDefault != ''">#{isDefault},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateExamPrompt" parameterType="ExamPrompt">
+        update exam_prompt
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="content != null and content != ''">content = #{content},</if>
+            <if test="isDefault != null and isDefault != ''">is_default = #{isDefault},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteExamPromptById" parameterType="Long">
+        delete from exam_prompt where id = #{id}
+    </delete>
+
+    <delete id="deleteExamPromptByIds" parameterType="String">
+        delete from exam_prompt where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

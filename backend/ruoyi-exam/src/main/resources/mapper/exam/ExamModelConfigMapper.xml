@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.exam.mapper.ExamModelConfigMapper">
+    
+    <resultMap type="ExamModelConfig" id="ExamModelConfigResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="baseUrl"    column="base_url"    />
+        <result property="apiKey"    column="api_key"    />
+        <result property="modelName"    column="model_name"    />
+        <result property="isDefault"    column="is_default"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectExamModelConfigVo">
+        select id, name, base_url, api_key, model_name, is_default, create_by, create_time, update_by, update_time from exam_model_config
+    </sql>
+
+    <select id="selectExamModelConfigList" parameterType="ExamModelConfig" resultMap="ExamModelConfigResult">
+        <include refid="selectExamModelConfigVo"/>
+        <where>  
+            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
+            <if test="baseUrl != null  and baseUrl != ''"> and base_url = #{baseUrl}</if>
+            <if test="modelName != null  and modelName != ''"> and model_name like concat('%', #{modelName}, '%')</if>
+            <if test="isDefault != null  and isDefault != ''"> and is_default = #{isDefault}</if>
+        </where>
+    </select>
+    
+    <select id="selectExamModelConfigById" parameterType="Long" resultMap="ExamModelConfigResult">
+        <include refid="selectExamModelConfigVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertExamModelConfig" parameterType="ExamModelConfig" useGeneratedKeys="true" keyProperty="id">
+        insert into exam_model_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">name,</if>
+            <if test="baseUrl != null and baseUrl != ''">base_url,</if>
+            <if test="apiKey != null">api_key,</if>
+            <if test="modelName != null and modelName != ''">model_name,</if>
+            <if test="isDefault != null and isDefault != ''">is_default,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="baseUrl != null and baseUrl != ''">#{baseUrl},</if>
+            <if test="apiKey != null">#{apiKey},</if>
+            <if test="modelName != null and modelName != ''">#{modelName},</if>
+            <if test="isDefault != null and isDefault != ''">#{isDefault},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateExamModelConfig" parameterType="ExamModelConfig">
+        update exam_model_config
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="baseUrl != null and baseUrl != ''">base_url = #{baseUrl},</if>
+            <if test="apiKey != null">api_key = #{apiKey},</if>
+            <if test="modelName != null and modelName != ''">model_name = #{modelName},</if>
+            <if test="isDefault != null and isDefault != ''">is_default = #{isDefault},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteExamModelConfigById" parameterType="Long">
+        delete from exam_model_config where id = #{id}
+    </delete>
+
+    <delete id="deleteExamModelConfigByIds" parameterType="String">
+        delete from exam_model_config where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

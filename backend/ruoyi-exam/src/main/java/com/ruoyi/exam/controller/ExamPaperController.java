@@ -30,6 +30,7 @@ import java.util.Map;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.exam.mapper.ExamPaperMapper;
+import com.ruoyi.exam.mapper.ExamQuestionMapper;
 import com.ruoyi.exam.util.PaperComposeUtil;
 import com.ruoyi.exam.util.PaperExportUtil;
 
@@ -46,6 +47,7 @@ public class ExamPaperController extends BaseController
     @Autowired
     private IExamPaperService examPaperService;
     @Autowired private ExamPaperMapper paperMapper;
+    @Autowired private ExamQuestionMapper questionMapper;
     @Autowired private PaperComposeUtil composeUtil;
     @Autowired private PaperExportUtil paperExportUtil;
 
@@ -118,6 +120,15 @@ public class ExamPaperController extends BaseController
     }
 
     // 组卷预览：只抽题不写库；选了章节就只在这些章节里抽
+    // 组卷弹窗用：返回当前课程/章节下能用多少题
+    @PostMapping("/availableCount")
+    public AjaxResult availableCount(@RequestBody Map<String, Object> params)
+    {
+        Long courseId = Long.valueOf(str(params.get("courseId")));
+        List<Long> chapterIds = toLongList(params.get("chapterIds"));
+        return success(questionMapper.selectAvailableCount(courseId, chapterIds));
+    }
+
     @PostMapping("/composePreview")
     public AjaxResult composePreview(@RequestBody Map<String, Object> params)
     {

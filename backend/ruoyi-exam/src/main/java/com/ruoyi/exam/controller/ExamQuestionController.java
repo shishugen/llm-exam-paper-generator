@@ -59,19 +59,6 @@ public class ExamQuestionController extends BaseController
     }
 
     /**
-     * 导出题库列表
-     */
-    @PreAuthorize("@ss.hasPermi('exam:question:export')")
-    @Log(title = "题库", businessType = BusinessType.EXPORT)
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, ExamQuestion examQuestion)
-    {
-        List<ExamQuestion> list = examQuestionService.selectExamQuestionList(examQuestion);
-        ExcelUtil<ExamQuestion> util = new ExcelUtil<ExamQuestion>(ExamQuestion.class);
-        util.exportExcel(response, list, "题库数据");
-    }
-
-    /**
      * 获取题库详细信息
      */
     @PreAuthorize("@ss.hasPermi('exam:question:query')")
@@ -263,13 +250,19 @@ public class ExamQuestionController extends BaseController
         Long questionId = Long.valueOf(str(params.get("questionId")));
         String action = str(params.get("action"));
         String reason = str(params.get("reason"));
+        String reviewerIdText = str(params.get("reviewerId"));
+        Long reviewerId = reviewerIdText.isEmpty() ? 0L : Long.valueOf(reviewerIdText);
+        if (reviewerId == 0)
+        {
+            return error("登录信息已失效，请重新登录");
+        }
         if (!"2".equals(action) && !"3".equals(action))
         {
             return error("操作类型不正确");
         }
         try
         {
-            doReview(questionId, action, reason);
+            doReview(questionId, action, reason, reviewerId);
         }
         catch (RuntimeException e)
         {
@@ -285,6 +278,12 @@ public class ExamQuestionController extends BaseController
         List<Object> idList = (List<Object>) params.get("ids");
         String action = str(params.get("action"));
         String reason = str(params.get("reason"));
+        String reviewerIdText = str(params.get("reviewerId"));
+        Long reviewerId = reviewerIdText.isEmpty() ? 0L : Long.valueOf(reviewerIdText);
+        if (reviewerId == 0)
+        {
+            return error("登录信息已失效，请重新登录");
+        }
         if (idList == null || idList.isEmpty())
         {
             return error("请选择至少一道题");
@@ -298,7 +297,7 @@ public class ExamQuestionController extends BaseController
         {
             try
             {
-                doReview(Long.valueOf(String.valueOf(id)), action, reason);
+                doReview(Long.valueOf(String.valueOf(id)), action, reason, reviewerId);
                 ok++;
             }
             catch (RuntimeException e)
@@ -309,7 +308,7 @@ public class ExamQuestionController extends BaseController
         return success("已审核 " + ok + " 道" + (fail > 0 ? "，失败 " + fail + " 道" : ""));
     }
 
-    private void doReview(Long questionId, String action, String reason)
+    private void doReview(Long questionId, String action, String reason, Long reviewerId)
     {
         ExamQuestion q = questionMapper.selectExamQuestionById(questionId);
         if (q == null)
@@ -318,7 +317,7 @@ public class ExamQuestionController extends BaseController
         }
         q.setStatus(action);
         q.setRejectReason("3".equals(action) ? reason : "");
-        q.setReviewerId(getUserId());
+        q.setReviewerId(reviewerId);
         q.setReviewTime(DateUtils.getNowDate());
         questionMapper.updateExamQuestion(q);
 
@@ -326,7 +325,7 @@ public class ExamQuestionController extends BaseController
         log.setQuestionId(questionId);
         log.setAction(action);
         log.setReason(reason);
-        log.setReviewerId(getUserId());
+        log.setReviewerId(reviewerId);
         reviewLogMapper.insertExamReviewLog(log);
     }
 

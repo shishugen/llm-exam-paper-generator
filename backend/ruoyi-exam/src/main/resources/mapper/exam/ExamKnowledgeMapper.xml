@@ -34,6 +34,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="weight != null "> and k.weight = #{weight}</if>
             <if test="sortNo != null "> and k.sort_no = #{sortNo}</if>
         </where>
+        order by k.id asc
     </select>
     
     <select id="selectExamKnowledgeById" parameterType="Long" resultMap="ExamKnowledgeResult">

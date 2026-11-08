@@ -47,19 +47,6 @@ public class ExamChapterController extends BaseController
     }
 
     /**
-     * 导出章节列表
-     */
-    @PreAuthorize("@ss.hasPermi('exam:chapter:export')")
-    @Log(title = "章节", businessType = BusinessType.EXPORT)
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, ExamChapter examChapter)
-    {
-        List<ExamChapter> list = examChapterService.selectExamChapterList(examChapter);
-        ExcelUtil<ExamChapter> util = new ExcelUtil<ExamChapter>(ExamChapter.class);
-        util.exportExcel(response, list, "章节数据");
-    }
-
-    /**
      * 获取章节详细信息
      */
     @PreAuthorize("@ss.hasPermi('exam:chapter:query')")

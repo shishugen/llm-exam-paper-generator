@@ -25,6 +25,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="courseName != null  and courseName != ''"> and course_name like concat('%', #{courseName}, '%')</if>
             <if test="courseCode != null  and courseCode != ''"> and course_code = #{courseCode}</if>
         </where>
+        order by create_time desc, id desc
     </select>
     
     <select id="selectExamCourseById" parameterType="Long" resultMap="ExamCourseResult">

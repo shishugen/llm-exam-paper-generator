@@ -1,6 +1,7 @@
 package com.ruoyi.exam.mapper;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.ibatis.annotations.Param;
 import com.ruoyi.exam.domain.ExamQuestion;
 
@@ -80,4 +81,8 @@ public interface ExamQuestionMapper
      * 该知识点上次被驳回的原因，拼进下一次 Prompt
      */
     public String selectRejectReason(@Param("knowledgeId") Long knowledgeId);
+
+    // 数一下当前课程/章节里能用的题，按题型和难度各数一遍
+    public Map<String, Object> selectAvailableCount(@Param("courseId") Long courseId,
+                                                    @Param("chapterIds") List<Long> chapterIds);
 }

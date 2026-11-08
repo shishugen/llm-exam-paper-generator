@@ -24,17 +24,17 @@
 
           <el-divider content-position="left">题型配比（题数）</el-divider>
           <el-row>
-            <el-col :span="12"><el-form-item label="单选" label-width="50px"><el-input-number v-model="form.t1" :min="0" :max="50" size="small" /></el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="多选" label-width="50px"><el-input-number v-model="form.t2" :min="0" :max="50" size="small" /></el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="判断" label-width="50px"><el-input-number v-model="form.t3" :min="0" :max="50" size="small" /></el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="简答" label-width="50px"><el-input-number v-model="form.t4" :min="0" :max="50" size="small" /></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="单选" label-width="50px"><div class="avail-row"><el-input-number v-model="form.t1" :min="0" :max="maxOf('t1')" size="small" style="width: 84px" /><span class="avail-text">可用 {{ available.t1 || 0 }}</span></div></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="多选" label-width="50px"><div class="avail-row"><el-input-number v-model="form.t2" :min="0" :max="maxOf('t2')" size="small" style="width: 84px" /><span class="avail-text">可用 {{ available.t2 || 0 }}</span></div></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="判断" label-width="50px"><div class="avail-row"><el-input-number v-model="form.t3" :min="0" :max="maxOf('t3')" size="small" style="width: 84px" /><span class="avail-text">可用 {{ available.t3 || 0 }}</span></div></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="简答" label-width="50px"><div class="avail-row"><el-input-number v-model="form.t4" :min="0" :max="maxOf('t4')" size="small" style="width: 84px" /><span class="avail-text">可用 {{ available.t4 || 0 }}</span></div></el-form-item></el-col>
           </el-row>
 
           <el-divider content-position="left">难度分布（题数）</el-divider>
           <el-row>
-            <el-col :span="12"><el-form-item label="容易" label-width="50px"><el-input-number v-model="form.d1" :min="0" :max="50" size="small" /></el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="中等" label-width="50px"><el-input-number v-model="form.d2" :min="0" :max="50" size="small" /></el-form-item></el-col>
-            <el-col :span="12"><el-form-item label="较难" label-width="50px"><el-input-number v-model="form.d3" :min="0" :max="50" size="small" /></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="容易" label-width="50px"><div class="avail-row"><el-input-number v-model="form.d1" :min="0" :max="maxOf('d1')" size="small" style="width: 84px" /><span class="avail-text">可用 {{ available.d1 || 0 }}</span></div></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="中等" label-width="50px"><div class="avail-row"><el-input-number v-model="form.d2" :min="0" :max="maxOf('d2')" size="small" style="width: 84px" /><span class="avail-text">可用 {{ available.d2 || 0 }}</span></div></el-form-item></el-col>
+            <el-col :span="12"><el-form-item label="较难" label-width="50px"><div class="avail-row"><el-input-number v-model="form.d3" :min="0" :max="maxOf('d3')" size="small" style="width: 84px" /><span class="avail-text">可用 {{ available.d3 || 0 }}</span></div></el-form-item></el-col>
           </el-row>
 
           <el-form-item label="覆盖率目标">
@@ -43,6 +43,7 @@
           </el-form-item>
         </el-form>
 
+        <div class="avail-total">当前范围共 {{ available.total || 0 }} 道可用题（只算已通过审核的）</div>
         <el-button type="primary" class="gen-btn" :loading="loading" @click="doPreview">
           {{ loading ? '正在抽题…' : '生成预览' }}
         </el-button>
@@ -101,7 +102,7 @@
 <script setup name="ComposeDialog">
 import { listCourse } from "@/api/exam/course"
 import { listChapter } from "@/api/exam/chapter"
-import { composePreview, composeSave } from "@/api/exam/paper"
+import { composePreview, composeSave, getAvailableCount } from "@/api/exam/paper"
 
 const emit = defineEmits(['close', 'success'])
 const { proxy } = getCurrentInstance()
@@ -114,6 +115,8 @@ const courses = ref([])
 const chapters = ref([])
 const previewed = ref(false)
 const result = ref({ questions: [], perScore: 0, coverage: {} })
+const available = ref({ t1: 0, t2: 0, t3: 0, t4: 0, d1: 0, d2: 0, d3: 0, total: 0 })
+const countLoaded = ref(false)
 
 const form = reactive({
   courseId: null, chapterIds: [], title: '', totalScore: 100,
@@ -141,6 +144,12 @@ watch(() => form.courseId, (id) => {
   }
 })
 
+// 换课程和换章节都会走到这里，只数一次
+watch(() => form.chapterIds, () => {
+  previewed.value = false
+  loadAvailable()
+})
+
 /** 组卷参数：预览和保存共用 */
 function buildParams() {
   const typeRatio = { '1': form.t1, '2': form.t2, '3': form.t3, '4': form.t4 }
@@ -155,6 +164,30 @@ function buildParams() {
   }
 }
 
+// 数一数当前课程/章节下能抽多少题，只算已通过审核的
+function loadAvailable() {
+  if (!form.courseId) {
+    available.value = { t1: 0, t2: 0, t3: 0, t4: 0, d1: 0, d2: 0, d3: 0, total: 0 }
+    countLoaded.value = false
+    return
+  }
+  getAvailableCount({ courseId: form.courseId, chapterIds: form.chapterIds }).then(res => {
+    available.value = res.data || {}
+    countLoaded.value = true
+    // 已经填好的数字不能超过题库里有的
+    const keys = ['t1', 't2', 't3', 't4', 'd1', 'd2', 'd3']
+    keys.forEach(k => {
+      const max = Number(available.value[k] || 0)
+      if (form[k] > max) form[k] = max
+    })
+  })
+}
+
+// 数字框上限：没数出来之前按 50，数出来之后按实际题数
+function maxOf(key) {
+  return countLoaded.value ? Number(available.value[key] || 0) : 50
+}
+
 function checkForm() {
   if (!form.courseId || !form.title) {
     proxy.$modal.msgWarning('请选择课程并填写试卷名称')
@@ -164,6 +197,13 @@ function checkForm() {
   if (total === 0) {
     proxy.$modal.msgWarning('题型配比至少要有一道题')
     return false
+  }
+  const keys = ['t1', 't2', 't3', 't4', 'd1', 'd2', 'd3']
+  for (const k of keys) {
+    if (form[k] > maxOf(k)) {
+      proxy.$modal.msgWarning('题数不能超过题库里可用的题，请调整配比或先补题')
+      return false
+    }
   }
   return true
 }
@@ -220,6 +260,9 @@ function parseOptions(jsonStr) {
 .cz-left { width: 380px; flex: none; overflow-y: auto; padding-right: 4px; }
 .gen-btn { width: 100%; margin-top: 4px; }
 .left-tip { margin-top: 10px; font-size: 12px; line-height: 1.7; color: #909399; }
+.avail-row { display: flex; align-items: center; gap: 6px; }
+.avail-text { font-size: 12px; color: #909399; white-space: nowrap; }
+.avail-total { margin-top: 8px; font-size: 12px; color: #606266; }
 .tip-text { font-size: 12px; color: #909399; }
 .ml6 { margin-left: 6px; }
 .ml8 { margin-left: 8px; }

@@ -83,3 +83,13 @@ export function getPaperDetail(paperId) {
 export function exportPaper(paperId, filename) {
   return download('/exam/paper/exportWord', { paperId }, filename)
 }
+
+// 组卷弹窗用：当前课程/章节下能抽多少题（只算已通过审核的）
+export function getAvailableCount(data) {
+  return request({
+    url: '/exam/paper/availableCount',
+    method: 'post',
+    data: data,
+    headers: { repeatSubmit: false }
+  })
+}

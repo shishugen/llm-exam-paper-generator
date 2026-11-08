@@ -47,19 +47,6 @@ public class ExamCourseController extends BaseController
     }
 
     /**
-     * 导出课程列表
-     */
-    @PreAuthorize("@ss.hasPermi('exam:course:export')")
-    @Log(title = "课程", businessType = BusinessType.EXPORT)
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, ExamCourse examCourse)
-    {
-        List<ExamCourse> list = examCourseService.selectExamCourseList(examCourse);
-        ExcelUtil<ExamCourse> util = new ExcelUtil<ExamCourse>(ExamCourse.class);
-        util.exportExcel(response, list, "课程数据");
-    }
-
-    /**
      * 获取课程详细信息
      */
     @PreAuthorize("@ss.hasPermi('exam:course:query')")

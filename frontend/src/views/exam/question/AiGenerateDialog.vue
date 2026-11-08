@@ -38,7 +38,7 @@
       <!-- ===== 右边：完整题目预览 ===== -->
       <div class="ai-right">
         <div class="right-head">
-          <span>生成结果（完整题目）</span>
+          <span>生成结果（可直接修改）</span>
           <span v-if="generated" class="cnt">
             共 {{ previewResults.length }} 道，有效 {{ validCount }} 道<template v-if="invalidCount > 0">，无效 {{ invalidCount }} 道</template>
           </span>
@@ -53,16 +53,33 @@
               </el-tag>
               <el-tag size="small" type="info" class="ml6">{{ typeMap[q.type] || '—' }}</el-tag>
               <el-tag size="small" type="info" class="ml6">{{ diffMap[q.difficulty] || '—' }}</el-tag>
-              <span class="q-score">{{ q.score ?? '—' }} 分</span>
+              <el-input-number v-if="q.editing" v-model="q.score" :min="1" :max="100" size="small" class="q-score-input" />
+              <span v-else class="q-score">{{ q.score ?? '—' }} 分</span>
+              <el-button v-if="q.status !== '-1'" link type="primary" size="small" class="edit-btn" @click="q.editing = !q.editing">
+                {{ q.editing ? '完成' : '编辑' }}
+              </el-button>
             </div>
-            <div class="q-stem">{{ q.stem || '（无题干）' }}</div>
-            <div v-if="q.options" class="q-options">
-              <div v-for="o in parseOptions(q.options)" :key="o.key" class="q-option">
-                <b>{{ o.key }}.</b> {{ o.value }}
+            <div class="q-stem">
+              <el-input v-if="q.editing" v-model="q.stem" type="textarea" :rows="2" placeholder="题干" />
+              <span v-else>{{ q.stem || '（无题干）' }}</span>
+            </div>
+            <div v-if="q.optionList && q.optionList.length > 0" class="q-options">
+              <div v-for="o in q.optionList" :key="o.key" class="q-option">
+                <b>{{ o.key }}.</b>
+                <el-input v-if="q.editing" v-model="o.value" size="small" />
+                <span v-else>{{ o.value }}</span>
               </div>
             </div>
-            <div class="q-line"><b>答案：</b><span class="ans">{{ q.answer || '—' }}</span></div>
-            <div v-if="q.analysis" class="q-line"><b>解析：</b>{{ q.analysis }}</div>
+            <div class="q-line">
+              <b>答案：</b>
+              <el-input v-if="q.editing" v-model="q.answer" size="small" class="ans-input" />
+              <span v-else class="ans">{{ q.answer || '—' }}</span>
+            </div>
+            <div v-if="q.editing || q.analysis" class="q-line">
+              <b>解析：</b>
+              <el-input v-if="q.editing" v-model="q.analysis" type="textarea" :rows="2" placeholder="解析" />
+              <span v-else>{{ q.analysis }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -110,7 +127,12 @@ function doPreview() {
   }
   loading.value = true
   previewQuestions(form).then(res => {
-    previewResults.value = res.data || []
+    const list = res.data || []
+    for (const q of list) {
+      q.optionList = parseOptions(q.options)
+      q.editing = false
+    }
+    previewResults.value = list
     validCount.value = previewResults.value.filter(q => q.status !== '-1').length
     invalidCount.value = previewResults.value.filter(q => q.status === '-1').length
     generated.value = true
@@ -121,11 +143,17 @@ function doPreview() {
 }
 
 function doSave() {
+  const questions = previewResults.value.filter(q => q.status !== '-1')
+  for (const q of questions) {
+    if (q.optionList && q.optionList.length > 0) {
+      q.options = JSON.stringify(q.optionList)
+    }
+  }
   const payload = {
     knowledgeId: form.knowledgeId,
     type: form.type,
     difficulty: form.difficulty,
-    questions: previewResults.value.filter(q => q.status !== '-1')
+    questions: questions
   }
   saving.value = true
   saveGenerated(payload).then(res => {
@@ -183,8 +211,14 @@ function parseOptions(jsonStr) {
 .q-score { margin-left: auto; font-size: 12px; color: #909399; }
 .q-stem { font-size: 14px; line-height: 1.8; color: #303133; white-space: pre-wrap; word-break: break-word; }
 .q-options { margin-top: 8px; }
-.q-option { font-size: 13px; line-height: 1.9; color: #606266; white-space: pre-wrap; word-break: break-word; }
-.q-line { margin-top: 8px; font-size: 13px; line-height: 1.8; color: #606266; white-space: pre-wrap; word-break: break-word; }
+.q-option { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 13px; color: #606266; }
+.q-option b { flex: none; }
+.q-line { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; font-size: 13px; color: #606266; white-space: pre-wrap; word-break: break-word; }
+.q-line b { flex: none; line-height: 32px; }
+.q-line > span { line-height: 32px; }
 .q-line .ans { color: #67c23a; font-weight: 600; }
+.ans-input { width: 220px; }
+.q-score-input { width: 110px; margin-left: auto; }
+.edit-btn { margin-left: 8px; flex: none; }
 .ml6 { margin-left: 6px; }
 </style>

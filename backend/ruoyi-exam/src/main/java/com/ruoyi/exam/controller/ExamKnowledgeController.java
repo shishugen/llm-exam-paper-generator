@@ -47,19 +47,6 @@ public class ExamKnowledgeController extends BaseController
     }
 
     /**
-     * 导出知识点列表
-     */
-    @PreAuthorize("@ss.hasPermi('exam:knowledge:export')")
-    @Log(title = "知识点", businessType = BusinessType.EXPORT)
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, ExamKnowledge examKnowledge)
-    {
-        List<ExamKnowledge> list = examKnowledgeService.selectExamKnowledgeList(examKnowledge);
-        ExcelUtil<ExamKnowledge> util = new ExcelUtil<ExamKnowledge>(ExamKnowledge.class);
-        util.exportExcel(response, list, "知识点数据");
-    }
-
-    /**
      * 获取知识点详细信息
      */
     @PreAuthorize("@ss.hasPermi('exam:knowledge:query')")

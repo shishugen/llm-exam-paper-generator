@@ -47,19 +47,6 @@ public class ExamPaperQuestionController extends BaseController
     }
 
     /**
-     * 导出试卷明细列表
-     */
-    @PreAuthorize("@ss.hasPermi('exam:paperQuestion:export')")
-    @Log(title = "试卷明细", businessType = BusinessType.EXPORT)
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, ExamPaperQuestion examPaperQuestion)
-    {
-        List<ExamPaperQuestion> list = examPaperQuestionService.selectExamPaperQuestionList(examPaperQuestion);
-        ExcelUtil<ExamPaperQuestion> util = new ExcelUtil<ExamPaperQuestion>(ExamPaperQuestion.class);
-        util.exportExcel(response, list, "试卷明细数据");
-    }
-
-    /**
      * 获取试卷明细详细信息
      */
     @PreAuthorize("@ss.hasPermi('exam:paperQuestion:query')")

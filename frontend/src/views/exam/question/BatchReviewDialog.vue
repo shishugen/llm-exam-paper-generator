@@ -23,10 +23,12 @@
 
 <script setup name="BatchReviewDialog">
 import { reviewBatchQuestion } from "@/api/exam/question"
+import useUserStore from '@/store/modules/user'
 
 const props = defineProps({ ids: { type: Array, default: () => [] } })
 const emit = defineEmits(['close', 'success'])
 const { proxy } = getCurrentInstance()
+const userStore = useUserStore()
 
 const visible = ref(true)
 const loading = ref(false)
@@ -42,7 +44,8 @@ function submit() {
     return
   }
   loading.value = true
-  reviewBatchQuestion({ ids: props.ids, action: form.action, reason: form.reason })
+  reviewBatchQuestion({ ids: props.ids, action: form.action, reason: form.reason,
+                       reviewerId: userStore.id })
     .then(res => {
       proxy.$modal.msgSuccess(res.msg || '审核完成')
       emit('success')

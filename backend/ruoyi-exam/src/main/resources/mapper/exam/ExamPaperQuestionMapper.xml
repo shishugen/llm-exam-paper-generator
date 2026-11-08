@@ -40,7 +40,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="score != null "> and pq.score = #{score}</if>
             <if test="locked != null  and locked != ''"> and pq.locked = #{locked}</if>
         </where>
-        order by pq.paper_id desc, pq.sort_no asc
+        order by pq.create_time desc, pq.paper_id desc, pq.sort_no asc
     </select>
     
     <select id="selectExamPaperQuestionById" parameterType="Long" resultMap="ExamPaperQuestionResult">

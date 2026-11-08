@@ -47,19 +47,6 @@ public class ExamReviewLogController extends BaseController
     }
 
     /**
-     * 导出题目审核记录列表
-     */
-    @PreAuthorize("@ss.hasPermi('exam:reviewLog:export')")
-    @Log(title = "题目审核记录", businessType = BusinessType.EXPORT)
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, ExamReviewLog examReviewLog)
-    {
-        List<ExamReviewLog> list = examReviewLogService.selectExamReviewLogList(examReviewLog);
-        ExcelUtil<ExamReviewLog> util = new ExcelUtil<ExamReviewLog>(ExamReviewLog.class);
-        util.exportExcel(response, list, "题目审核记录数据");
-    }
-
-    /**
      * 获取题目审核记录详细信息
      */
     @PreAuthorize("@ss.hasPermi('exam:reviewLog:query')")

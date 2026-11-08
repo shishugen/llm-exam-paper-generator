@@ -39,15 +39,6 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['exam:aiCallLog:export']"
-        >导出</el-button>
-      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -131,13 +122,6 @@ function resetQuery() {
   queryParams.value.model = undefined
   queryParams.value.status = undefined
   handleQuery()
-}
-
-/** 导出按钮操作 */
-function handleExport() {
-  proxy.download('exam/aiCallLog/export', {
-    ...queryParams.value
-  }, `aiCallLog_${new Date().getTime()}.xlsx`)
 }
 
 getList()

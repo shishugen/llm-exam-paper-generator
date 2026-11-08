@@ -36,7 +36,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="status != null  and status != ''"> and status = #{status}</if>
             <if test="errorMsg != null  and errorMsg != ''"> and error_msg = #{errorMsg}</if>
         </where>
-        order by id desc
+        order by create_time desc, id desc
     </select>
     
     <select id="selectExamAiCallLogById" parameterType="Long" resultMap="ExamAiCallLogResult">

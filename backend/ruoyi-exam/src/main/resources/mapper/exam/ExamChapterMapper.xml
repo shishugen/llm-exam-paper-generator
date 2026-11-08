@@ -32,6 +32,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="name != null  and name != ''"> and c.name like concat('%', #{name}, '%')</if>
             <if test="sortNo != null "> and c.sort_no = #{sortNo}</if>
         </where>
+        order by c.id asc
     </select>
     
     <select id="selectExamChapterById" parameterType="Long" resultMap="ExamChapterResult">

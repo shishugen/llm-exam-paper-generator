@@ -49,6 +49,7 @@ public class PaperComposeUtil
             {
                 String diff = difficulties.isEmpty() ? "2"
                         : difficulties.get((sortNo - 1) % difficulties.size());
+                sortNo++;
                 List<ExamQuestion> questions = questionMapper.selectRandomQuestions(
                         paper.getCourseId(), entry.getKey(), diff, chapterIds, used, 1);
                 if (questions.isEmpty())
@@ -59,7 +60,6 @@ public class PaperComposeUtil
                 ExamQuestion q = questions.get(0);
                 used.add(q.getId());
                 picked.add(q);
-                sortNo++;
             }
         }
         // 覆盖率：抽中的题覆盖了多少知识点

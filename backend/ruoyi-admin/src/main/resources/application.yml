@@ -143,12 +143,7 @@ xss:
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
 
-# 大模型出题配置（仅服务端可见，不进前端、不进仓库）
+# 大模型出题配置（接口地址、密钥、模型名、提示词都改到数据库里维护）
 llm:
   # 离线演示开关：false = 真实调用大模型接口；改成 true 则返回本地预置题目（答辩断网兜底）
   mock: false
-  # OpenAI 兼容协议地址
-  api-url: https://apihub.agnes-ai.com/v1/chat/completions
-  # 真实 Key 用环境变量 LLM_API_KEY 注入，配置文件里保持为空
-  api-key: ${LLM_API_KEY:sk-JfBeq9SlPWgHjc5RGdHM4DhdfbG5O1KbOtWEXuAlTnTvs8LN}
-  model: agnes-2.5-flash

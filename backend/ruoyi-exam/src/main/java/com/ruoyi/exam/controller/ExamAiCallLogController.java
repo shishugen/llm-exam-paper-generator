@@ -51,19 +51,6 @@ public class ExamAiCallLogController extends BaseController
     }
 
     /**
-     * 导出大模型调用日志列表
-     */
-    @PreAuthorize("@ss.hasPermi('exam:aiCallLog:export')")
-    @Log(title = "大模型调用日志", businessType = BusinessType.EXPORT)
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, ExamAiCallLog examAiCallLog)
-    {
-        List<ExamAiCallLog> list = examAiCallLogService.selectExamAiCallLogList(examAiCallLog);
-        ExcelUtil<ExamAiCallLog> util = new ExcelUtil<ExamAiCallLog>(ExamAiCallLog.class);
-        util.exportExcel(response, list, "大模型调用日志数据");
-    }
-
-    /**
      * 获取大模型调用日志详细信息
      */
     @PreAuthorize("@ss.hasPermi('exam:aiCallLog:query')")
