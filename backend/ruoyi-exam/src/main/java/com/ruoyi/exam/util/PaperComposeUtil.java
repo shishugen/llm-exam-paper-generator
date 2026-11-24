@@ -61,7 +61,7 @@ public class PaperComposeUtil
                 }
                 if (questions.isEmpty())
                 {
-                    warning = "题型 " + entry.getKey() + " 在难度 " + diff + " 下题量不足，请先补题";
+                    warning = typeName(entry.getKey()) + "在" + diffName(diff) + "难度下题量不足，请先补题";
                     continue;
                 }
                 ExamQuestion q = questions.get(0);
@@ -183,5 +183,25 @@ public class PaperComposeUtil
             }
         }
         return list;
+    }
+
+    // 提示里显示中文，不显示数字码
+    private String typeName(String code)
+    {
+        if ("1".equals(code)) return "单选题";
+        if ("2".equals(code)) return "多选题";
+        if ("3".equals(code)) return "判断题";
+        if ("4".equals(code)) return "简答题";
+        if ("5".equals(code)) return "综合题";
+        return "题型" + code;
+    }
+
+    private String diffName(String code)
+    {
+        if ("1".equals(code)) return "容易";
+        if ("2".equals(code)) return "中等";
+        if ("3".equals(code)) return "较难";
+        if ("4".equals(code)) return "困难";
+        return "难度" + code;
     }
 }

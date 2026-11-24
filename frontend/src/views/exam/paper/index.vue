@@ -62,15 +62,6 @@
         >删除</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['exam:paper:export']"
-        >导出</el-button>
-      </el-col>
-      <el-col :span="1.5">
         <el-button type="primary" plain icon="MagicStick" @click="composeDialog = true"
           v-hasPermi="['exam:paper:add']">一键组卷</el-button>
       </el-col>
@@ -362,13 +353,6 @@ function handleDelete(row) {
     getList()
     proxy.$modal.msgSuccess("删除成功")
   }).catch(() => {})
-}
-
-/** 导出按钮操作 */
-function handleExport() {
-  proxy.download('exam/paper/export', {
-    ...queryParams.value
-  }, `paper_${new Date().getTime()}.xlsx`)
 }
 
 getList()

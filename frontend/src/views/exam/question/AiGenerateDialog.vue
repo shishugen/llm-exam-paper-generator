@@ -27,12 +27,6 @@
         <el-button type="primary" class="gen-btn" :loading="loading" @click="doPreview">
           {{ loading ? 'AI 正在出题…' : '生成预览' }}
         </el-button>
-
-        <div class="left-tip">
-          点「生成预览」会实时调用大模型接口，一般 5～20 秒，题目多或模型忙时可能要 1 分钟以上，
-          最长等 2 分钟。生成结果先在右边看全文，确认没问题再点保存入库；不满意可重新生成。
-          单次最多 10 道。
-        </div>
       </div>
 
       <!-- ===== 右边：完整题目预览 ===== -->
@@ -44,7 +38,7 @@
           </span>
         </div>
         <div class="right-body" v-loading="loading" element-loading-text="AI 正在出题，请稍候…">
-          <el-empty v-if="!generated" description="左侧填好参数，点「生成预览」后这里显示完整的题目、选项、答案和解析" :image-size="80" />
+          <el-empty v-if="!generated" description="暂无生成结果" :image-size="80" />
           <div v-for="(q, i) in previewResults" :key="i" class="q-card" :class="{ 'q-invalid': q.status === '-1' }">
             <div class="q-top">
               <span class="q-no">{{ i + 1 }}</span>

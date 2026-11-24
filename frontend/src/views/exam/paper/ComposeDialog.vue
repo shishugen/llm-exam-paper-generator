@@ -47,9 +47,6 @@
         <el-button type="primary" class="gen-btn" :loading="loading" @click="doPreview">
           {{ loading ? '正在抽题…' : '生成预览' }}
         </el-button>
-        <div class="left-tip">
-          只从「已通过」审核的题目里随机抽。生成后先在右边浏览题目，确认没问题再点保存入库。
-        </div>
       </div>
 
       <!-- ===== 右边：题目预览 ===== -->
@@ -63,7 +60,7 @@
         <el-alert v-if="result.warning" type="warning" :closable="false" show-icon
           :title="result.warning" class="mb8" />
         <div class="right-body" v-loading="loading" element-loading-text="正在抽题…">
-          <el-empty v-if="!previewed" description="左侧填好参数，点「生成预览」后这里列出抽到的题目、选项、答案和解析" :image-size="80" />
+          <el-empty v-if="!previewed" description="暂无组卷结果" :image-size="80" />
           <div v-for="(q, i) in result.questions" :key="q.id" class="q-card">
             <div class="q-top">
               <span class="q-no">{{ i + 1 }}</span>
@@ -83,7 +80,6 @@
           <el-tag type="success">
             知识点覆盖率 {{ result.coverage.covered || 0 }}/{{ result.coverage.total || 0 }}（{{ result.coverage.rate || 0 }}%）
           </el-tag>
-          <span class="tip-text ml8">抽题时优先选未覆盖的知识点</span>
         </div>
       </div>
     </div>

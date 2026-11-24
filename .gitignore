@@ -12,3 +12,6 @@
 .~*
 uploadPath/
 .env.local
+
+# Redis 本地运行快照
+dump.rdb

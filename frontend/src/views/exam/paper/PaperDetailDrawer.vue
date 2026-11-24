@@ -3,18 +3,11 @@
     <div class="head-bar">
       <el-tag type="primary">总分 {{ paper.totalScore }} 分</el-tag>
       <el-tag type="info" class="ml8">共 {{ rows.length }} 道题</el-tag>
-      <el-tag type="success" class="ml8">
-        知识点覆盖率 {{ coverage.covered || 0 }}/{{ coverage.total || 0 }}（{{ coverage.rate || 0 }}%）
-      </el-tag>
       <div class="head-ops">
         <el-button type="primary" plain icon="Download" @click="handleExport">导出 Word</el-button>
         <el-button icon="Refresh" @click="load">刷新</el-button>
       </div>
     </div>
-
-    <el-alert v-if="coverage.total && coverage.rate < 60" type="warning" :closable="false" show-icon
-      class="mb8" title="知识点覆盖率偏低"
-      description="建议补充该课程的题目后再重新组卷；覆盖率目标仅作参考，抽题时已尽量分散知识点。" />
 
     <div v-loading="loading" class="q-list">
       <el-empty v-if="!loading && rows.length === 0" description="这份试卷还没有题目" :image-size="80" />
@@ -70,7 +63,6 @@ const visible = ref(true)
 const loading = ref(false)
 const paper = ref({})
 const rows = ref([])
-const coverage = ref({})
 
 function load() {
   loading.value = true
@@ -78,7 +70,6 @@ function load() {
     const d = res.data || {}
     paper.value = d.paper || {}
     rows.value = d.rows || []
-    coverage.value = d.coverage || {}
   }).finally(() => { loading.value = false })
 }
 
